@@ -1,0 +1,136 @@
+resultado =índice  1 biografía 2 contribuciones a la lingüística  2.1 teoría de principios y parámetros   3 activismo político y posicionamientos 4 antiglobalización económica de chomsky  4.1 perspectiva sobre el ateísmo, la ciencia y la religión   5 libros publicados  5.1 lingüística 5.2 política   6 véase también 7 notas 8 bibliografía 9 enlaces externos 
+esperado  =índice  1 biografía 2 contribuciones a la lingüística  2.1 teoría de principios y parámetros   3 activismo político y posicionamientos 4 antiglobalización económica de chomsky  4.1 perspectiva sobre el ateísmo, la ciencia y la religión   5 libros publicados  5.1 lingüística 5.2 política   6 véase también 7 notas 8 bibliografía 9 enlaces externos  
+
+esta página se editó por última vez el 26 oct 2022 a las 11:04. el texto está disponible bajo la licencia creative commons atribución compartir igual 3.0; pueden aplicarse cláusulas adicionales. al usar este sitio, usted acepta nuestros términos de uso y nuestra política de privacidad. wikipedia® es una marca registrada de la fundación wikimedia, inc., una organización sin ánimo de lucro. política de privacidad acerca de wikipedia limitación de responsabilidad versión para móviles desarrolladores estadísticas declaración de cookies
+esta página se editó por última vez el 26 oct 2022 a las 11:04. el texto está disponible bajo la licencia creative commons atribución compartir igual 3.0; pueden aplicarse cláusulas adicionales. al usar este sitio, usted acepta nuestros términos de uso y nuestra política de privacidad. wikipedia® es una marca registrada de la fundación wikimedia, inc., una organización sin ánimo de lucro. política de privacidad acerca de wikipedia limitación de responsabilidad versión para móviles desarrolladores estadísticas declaración de cookies
+
+
+de wikipedia, la enciclopedia libre ir a la navegación ir a la búsqueda noam chomsky noam chomsky en 2017información personalnacimiento 7 de diciembre de 1928 (93 años)filadelfia, pensilvania, estados unidosnacionalidad estadounidensereligión ateofamiliapadre william chomsky cónyuge carol chomsky (1949-2008)valeria wasserman chomsky (desde 2014) educacióneducado en instituto tecnológico de massachusettsoak lane day schoolcentral high school (hasta 1945)universidad de pensilvania (b.a.; 1945-1949)universidad de pensilvania (m.a.; 1949-1951)universidad de harvard (lingüística; 1951-1955) alumno de zellig harrisnelson goodman información profesionalocupación filósofo, lingüista, escritor político, profesor universitario, psicólogo, antropólogo, activista por los derechos humanos, pedagogo, crítico de medios, escritor, publicista, informático teórico e historiador área lingüística, filosofía del lenguaje, psicología, gramática generativa, teoría de la comunicación, ciencia cognitiva, filos
+de wikipedia, la enciclopedia libre ir a la navegación ir a la búsqueda noam chomsky noam chomsky en 2017información personalnacimiento 7 de diciembre de 1928 (93 años)filadelfia, pensilvania, estados unidosnacionalidad estadounidensereligión ateofamiliapadre william chomsky cónyuge carol chomsky (1949-2008)valeria wasserman chomsky (desde 2014) educacióneducado en instituto tecnológico de massachusettsoak lane day schoolcentral high school (hasta 1945)universidad de pensilvania (b.a.; 1945-1949)universidad de pensilvania (m.a.; 1949-1951)universidad de harvard (lingüística; 1951-1955) alumno de zellig harrisnelson goodman información profesionalocupación filósofo, lingüista, escritor político, profesor universitario, psicólogo, antropólogo,
+
+Índice 1 Biografía 2 Contribuciones lingüística 2.1 Teoría principios y parámetros 3 Activismo político y posicionamientos 4 Antiglobalización económica Chomsky 4.1 Perspectiva sobre el ateísmo, ciencia y religión 5 Libros publicados 5.1 Lingüística 5.2 Política 6 Véase también 7 Notas 8 Bibliografía 9 Enlaces externos
+índice 1 biografía 2 contribuciones lingüística 2.1 teoría principios y parámetros 3 activismo político y posicionamientos 4 antiglobalización económica chomsky 4.1 perspectiva sobre el ateísmo, ciencia y religión 5 libros publicados 5.1 lingüística 5.2 política 6 véase también 7 notas 8 bibliografía 9 enlaces externos
+==================
+Realizar una funcion 
+def get_headings(soup, head_n):
+
+Parámetros
+soup: este debe contener el documento HTML pero como un objeto de beautifulsoup.
+head_n: número entero que indica el nivel del título requerido.
+
+Retorna
+results: lista cuyos elementos son strings que indican los nombres de los headers pertenecientes al nivel del título señalado con head_n.
+==================
+Realizar una funcion
+def get_text(soup, id):
+
+Parámetros
+soup: este debe contener el documento HTML pero como un objeto de beautifulsoup.
+id: cadena de texto que indica una de las secciones del archivo HTML que tenga como id el argumento indicado.
+
+Retorna
+content: cadena de texto que contiene el contenido de la sección indicada por el parámetro id.
+
+Condiciones:
+incluir todo el contenido de una sección indicada del archivo HTML.
+
+==================
+Realizar una funcion
+def normalize(soup, id):
+
+Condiciones de la funcion:
+- Extraer un fragmento de texto a partir de un id, utilizando la funcion get_text(soup, id).
+- La cadena de texto entrante debe ser separada por cada salto de línea que se encuentre.
+- Todo el texto debe estar en minúsculas.
+- Se deben eliminar los espacios en blanco al inicio y al final de cada línea.
+- En la cadena de texto resultante, cada línea diferente de la cadena original se une por espacios para así formar un string de una sola línea.
+
+Parámetros
+soup: este debe contener el documento HTML pero como un objeto de beautifulsoup.
+id: cadena de texto que indica una de las secciones del archivo HTML que tenga como id el argumento indicado.
+
+Retorna
+strip_text: cadena de texto que contiene el contenido normalizado de la sección indicada por el parámetro id.
+===================
+Realizar una funcion def delete_words(soup, id, min_len, max_len, stops):
+Condiciones de la funcion:
+- Normalizar el texto de la sección indicada. utilizando la funcion normalize, creada anteiormente.
+- La cadena de texto a analizar debe separarse por espacios para poder obtener a los tokens.
+- Las palabras deben estar filtradas por un rango de longitud.
+- Se deben eliminar palabras de una lista dada y no arbitrariamente.
+- Los tokens de la cadena de texto resultante deben estar unidos por espacios para formar la cadena de texto de salida.
+
+Parámetros
+soup: este debe contener el documento HTML pero como un objeto de beautifulsoup.
+id: cadena de texto que indica una de las secciones del archivo HTML que tenga como id el argumento indicado.
+min_len: número entero que indica el límite inferior del rango de longitud por el cual deben estar filtradas las palabras.
+max_len: número entero que indica el límite superior del rango de longitud por el cual deben estar filtradas las palabras.
+stops: lista cuyos elementos son strings o tokens los cuales deben ser los que se eliminen de la cadena de texto.
+
+Retorna
+resulting_tokens: cadena de texto que contiene el contenido de la sección indicada luego de la eliminación de palabras.
+=================
+Realizar una funcion def count_words(soup, id, min_len, max_len,stops, words):
+Condiciones de la funcion:
+Tener en cuenta las funciones creadas anteriormente
+def delete_words(soup, id, min_len, max_len, stops):
+def normalize(soup, id):
+def get_text(soup, id):
+Retornar un diccionario que contenga como llave la palabra deseada y como valor la cantidad de ocurrencias que la palabra tiene dentro de una sección indicada del archivo HTML.
+
+Parámetros
+- soup: este debe contener el documento HTML pero como un objeto de beautifulsoup.
+- id: cadena de texto que indica una de las secciones del archivo HTML que tenga como id el argumento indicado.
+- min_len: número entero que indica el límite inferior del rango de longitud por el cual deben estar filtradas las palabras.
+- max_len: número entero que indica el límite superior del rango de longitud por el cual deben estar filtradas las palabras.
+- stops: lista cuyos elementos son strings o tokens los cuales deben ser los que se eliminen de la cadena de texto.
+ -words: lista cuyos elementos son strings que indican qué palabras se desean contar dentro del texto.
+
+Retorna
+counts: diccionario que contiene el conteo de las palabras (words) indicadas como argumentos.
+
+==========
+Podemos mejorar la funcion def count_words(soup, id, min_len, max_len, stops, words) 
+Condiciones:
+Utilizar las funciones siguientes para su desarrollo
+def get_text(soup, id):
+    ### ESCRIBA SU CÓDIGO AQUÍ ###
+    content = soup.find(id=id)
+
+    if content:
+      return content.get_text()
+    else:
+      return None
+
+def delete_words(soup, id, min_len, max_len, stops):
+    ### ESCRIBA SU CÓDIGO AQUÍ ###
+    # Normalizar el texto utilizando la función normalize
+    normalized_text = normalize(soup, id)
+
+    # Separar la cadena de texto en tokens (palabras)
+    tokens = normalized_text.split()
+
+    # Filtrar los tokens por longitud y eliminar los que están en la lista de stops
+    filtered_tokens = [
+        token for token in tokens
+        if min_len <= len(token) <= max_len and token not in stops
+    ]
+
+    # Unir los tokens filtrados en una sola cadena de texto
+    resulting_tokens = ' '.join(filtered_tokens)
+
+    return resulting_tokens
+
+
+Parámetros
+- soup: este debe contener el documento HTML pero como un objeto de beautifulsoup.
+- id: cadena de texto que indica una de las secciones del archivo HTML que tenga como id el argumento indicado.
+- min_len: número entero que indica el límite inferior del rango de longitud por el cual deben estar filtradas las palabras.
+- max_len: número entero que indica el límite superior del rango de longitud por el cual deben estar filtradas las palabras.
+- stops: lista cuyos elementos son strings o tokens los cuales deben ser los que se eliminen de la cadena de texto.
+ -words: lista cuyos elementos son strings que indican qué palabras se desean contar dentro del texto.
+
+Retorna
+counts: diccionario que contiene el conteo de las palabras (words) indicadas como argumentos.
+
+

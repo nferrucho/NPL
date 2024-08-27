@@ -1,0 +1,165 @@
+Se requiere realizar una funcion 
+
+def count_words(
+        soup, id, min_len, max_len,
+        stops, words
+        )
+		
+donde se realice un conteo de la cantidad de palabras dadas que se encuentren dentro de un texto en particular, para ello, debe completar la función count_words con un código válido que retorne un diccionario que contenga como llave la palabra deseada y como valor la cantidad de ocurrencias que la palabra tiene dentro de una sección indicada del archivo HTML
+Parámetros
+
+soup: este debe contener el documento HTML pero como un objeto de beautifulsoup.
+id: cadena de texto que indica una de las secciones del archivo HTML que tenga como id el argumento indicado.
+min_len: número entero que indica el límite inferior del rango de longitud por el cual deben estar filtradas las palabras.
+max_len: número entero que indica el límite superior del rango de longitud por el cual deben estar filtradas las palabras.
+stops: lista cuyos elementos son strings o tokens los cuales deben ser los que se eliminen de la cadena de texto.
+words: lista cuyos elementos son strings que indican qué palabras se desean contar dentro del texto.
+
+Condiciones
+Utilizar la funcion delete_words para eliminar palabras asi:
+
+	def delete_words(soup, id, min_len, max_len, stops):
+		### ESCRIBA SU CÓDIGO AQUÍ ###
+		# Normalizar el texto utilizando la función normalize
+		normalized_text = normalize(soup, id)
+
+		# Separar la cadena de texto en tokens (palabras)
+		tokens = normalized_text.split(' ')
+
+		# Filtrar los tokens por longitud y eliminar los que están en la lista de stops
+		filtered_tokens = [
+			token for token in tokens
+			if min_len <= len(token) <= max_len and token not in stops
+		]
+
+		# Unir los tokens filtrados en una sola cadena de texto
+		resulting_tokens = ' '.join(filtered_tokens)
+
+		return resulting_tokens
+
+Puede utilizar la función counts de Python para hacer más eficiente a la función. Su sintaxis es:
+  text.count(element)
+  
+Retorna
+
+counts: diccionario que contiene el conteo de las palabras (words) indicadas como argumentos.
+========================
+Se requiere realizar una funcion 
+
+def print_counts(
+        soup, id, min_len, max_len,
+        stops, words
+        ):
+
+Condiciones
+- Es una tabla a la funcion 
+	def count_words(soup, id, min_len, max_len, stops, words):
+		# Utiliza la función delete_words para obtener el texto filtrado
+		filtered_text = delete_words(soup, id, min_len, max_len, stops)
+		
+		# Inicializa un diccionario para almacenar el conteo de las palabras
+		counts = {}
+		
+		# Itera sobre la lista de palabras deseadas (words)
+		for word in words:
+			# Cuenta las ocurrencias de cada palabra en el texto filtrado
+			counts[word] = filtered_text.count(word)
+		
+		return counts
+	
+- Que retorne una tabla con la cantidad de ocurrencias que una palabra dada tiene dentro de una sección indicada del archivo HTML. 
+ Para realizar la tabla, tenga en cuenta que la separación, ancho o la longitud de cada columna es de 20 espacios o caracteres y se debe justificar cada elemento a la izquierda.
+- Utilizar el formateo de strings (f-strings) y, gracias a esto, es posible acotar el ancho de cada columna y si se debe justificar a izquierda (<) o derecha (>). 
+
+
+Parámetros
+
+soup: este debe contener el documento HTML pero como un objeto de beautifulsoup.
+id: cadena de texto que indica una de las secciones del archivo HTML que tenga como id el argumento indicado.
+min_len: número entero que indica el límite inferior del rango de longitud por el cual deben estar filtradas las palabras.
+max_len: número entero que indica el límite superior del rango de longitud por el cual deben estar filtradas las palabras.
+stops: lista cuyos elementos son strings o tokens los cuales deben ser los que se eliminen de la cadena de texto.
+words: lista cuyos elementos son strings que indican qué palabras se desean contar dentro del texto.
+
+Retorna
+
+values: conteo de la cantidad de ocurrencias de una palabra en formato de tabla (f-string).
+
+Ejemplo de salida
+|Palabra             |Conteo              |
+|--------------------!--------------------| 
+|chomshy             |97                  |
+|sintaxis            |6                   |
+
+
+========================
+    ### ESCRIBA SU CÓDIGO AQUÍ ###
+    values = []
+    # Llama a la función count_words para obtener el conteo de las palabras
+    counts = count_words(soup, id, min_len, max_len, stops, words)
+    
+    # Imprime la cabecera de la tabla
+    print(f"|{'Palabra':<20}|{'Conteo':<20}|")
+    print(f"|{'-'*20}|{'-'*20}|")
+    
+    # Imprime cada palabra y su conteo formateado en la tabla
+    for word, count in counts.items():
+        print(f"|{word:<20}|{count:<20}|")
+
+    return values
+    ### FIN DEL CÓDIGO ###
+	
+========================
+    tag_name = f'h{head_n}'
+    headers = soup.find_all(tag_name)
+    results = [header.get_text() for header in headers]
+
+    return results
+
+    
+=======================
+Se requiere realizar una funcion 
+
+def get_headings(soup, head_n):
+
+retorne una lista que contenga todos los nombres de las secciones (headers) del archivo HTML que sean del nivel indicado, por ejemplo, todos los títulos con la etiqueta <h2>.
+
+Parámetros
+
+soup: este debe contener el documento HTML pero como un objeto de beautifulsoup.
+head_n: número entero que indica el nivel del título requerido.
+Retorna
+=======================
+
+Estamos usando la siguiente funcion para obtener en una lista head_n todos los nombres de las seccion de un HTML 
+
+	def get_headings(soup, head_n):
+		### ESCRIBA SU CÓDIGO AQUÍ ###
+		tag_name = f'h{head_n}'
+		# Encontrar todas las etiquetas de ese nivel en el documento HTML
+		headers = soup.find_all(tag_name)
+		
+		# Extraer el texto de cada header y almacenarlo en una lista
+		results = [header.get_text().strip(' \n') for header in headers]
+		return results
+		
+Como se puede mejorar si vemos que debe tomar las secciones que contienen [editar]
+Ingresamos a la pagina 		https://mlds.unal.edu.co/asset-v1:MLDS+mlds4+2024_1+type@asset+block@chomsky.html
+y aparece la seccion [Menú de navegación] en la lista, siendo esto un error
+
+====================
+def get_headings(soup, head_n):
+  ### ESCRIBA SU CÓDIGO AQUÍ ###
+  #content_div = soup.find("div", id="content", class_="mw-body", role="main")
+  content_div = soup.find(id="content")  
+  # Si se encuentra el div, extrae los títulos desde allí
+  if content_div:
+    # Genera el tag de título correspondiente, por ejemplo 'h1', 'h2', etc.
+    tag = f'h{head_n}'
+    # Encuentra todos los elementos que corresponden a ese tag y devuelve sus textos
+    headings = [heading.get_text(strip=True) for heading in soup.find_all(tag)]
+  else:
+    headings = None # Devuelve una lista vacía si no se encuentra el div
+
+  return headings
+  

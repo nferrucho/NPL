@@ -1,10 +1,11 @@
 **Evolución de encuestas en el gremio de la construcción**
 
-    El gremio de la construcción desarrolla un conjunto de eventos continuamente para informar y fomentar en sus asociados las diferentes directrices en las cuales está conduciendo sus proyectos.
+El gremio de la construcción desarrolla un conjunto de eventos continuamente para informar y fomentar en sus asociados las diferentes directrices en las cuales está conduciendo sus proyectos.
 
-    Para medir la experiencia de los asociados que participan en cada uno de los eventos, se desarrollan encuestas con preguntas abiertas y cerradas que buscan obtener la retroalimentación a la agremiación sobre el procedimiento como se desarrolló el evento y la evaluación a las instalaciones donde se realizó el mismo
+Para medir la experiencia de los asociados que participan en cada uno de los eventos, se desarrollan encuestas con preguntas abiertas y cerradas que buscan obtener la retroalimentación a la agremiación sobre el procedimiento como se desarrolló el evento y la evaluación a las instalaciones donde se realizó el mismo
 
 **- Objetivos del proyecto**
+
 El gremio de la construcción necesita conocer que piensan sus asociados. 
 Se plantea como problema a solucionar, el encontrar las oportunidades de mejora que los participantes expresan en las encuestas que se realizan en cada evento
 Los elementos que se evalúan en estas encuestas son:
@@ -14,6 +15,8 @@ Los elementos que se evalúan en estas encuestas son:
 Se propone desarrollar un análisis de sentimientos con la información recolectada en las encuestas de cada evento.
 
 **- Objetivos del negocio**
+
+
 El gremio de la construcción busca representar los intereses de constructores, comerciales, constructores y contratistas.
 El contexto del proyecto busca conocer la experiencia de los participantes en cada uno de los eventos en los que participan. 
 Es importante reconocer que cada evento tiene un costo de ingreso, así mismo tiene una agenda a cumplir en la cual participan conferencias nacionales e internacionales. Estos dos elementos obligan a realizar una evaluación y calificación a varios puntos que se desarrollan en la agenda de cada evento.

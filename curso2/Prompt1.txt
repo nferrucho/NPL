@@ -1,0 +1,16 @@
+en python y utilizando la libreria spacy. Crear una funcion 
+def preprocess(doc, pos_list); recibe un documento de spacy y la lista de etiquedas POS para filtrar,
+el retorno es un string con el resultado del preprocesamiento.
+
+Condiciones de la funcion:
+1.Filtrar stopwords. usar is_stop para el filtro  y filtrar etiquetas POS con el atributo pos_ de los tokens de spacy. 
+2.Seleccionar únicamente palabras en algunas categorías de tipo POS.
+3.Normalizar el texto con unidecode.
+4.Convertir a minúsculas. Puede convertir los textos en minúsculas con el atributo lower de un string
+
+Parámetros:
+doc: documento de spacy.
+pos_list: lista de etiquetas POS a filtrar.
+
+Retorna: 
+preprocess_text: texto preprocesado.

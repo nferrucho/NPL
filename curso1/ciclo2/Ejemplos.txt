@@ -1,0 +1,69 @@
+puede realizar una funcion url_element() en regex de python que separe el protocolo, el dominio y la ruta de una URL 
+donde:
+pat es la experesion compilada con los elementos de una URL, por ejemplo: https://www.larepublica.co/redirect/post/3201905
+res es la respuesta seria: ('https', 'www.larepublica.co', 'redirect/post/3201905')
+
+Ejemplo de la funcion : 
+def url_elements():
+    regex = ""
+    pat = re.compile(regex)
+    return pat)
+
+==============================
+
+Desarrollar una funcion para seleccionar los registro de un dataFrame df donde a partir de un patron pat 
+def filter_type(df, pat):
+Parametros:
+df: conjunto de datos en formato pd.DataFrame.
+pat: expresión regular sobre la que se debe filtrar.
+
+Condiciones:
+utilizar str.contains para aplicar la expresion regular
+utilizar apply de pandas para validda elemento a elemento si sucede match con la expresion regular de entrada
+===========
+podemos desarrollar una funcion to_Spacy para extraer el texto de la columna news del dataframe df y convertirlo a objetos tipo doc usando un pipeline dado. 
+Parámetros
+
+df: conjunto de datos.
+nlp: pipeline de spacy.
+Retorna
+
+corpus: lista de documentos de spacy
+
+================
+Podemos desarrollar una funcion stopwords_count(corpus), para contar el numero de stopWords por cada documento (de spacy).
+Parámetros
+corpus: lista de documentos de spacy.
+Retorna
+
+counts: lista de conteos de stopwords por documento.
+
+================
+Podemos desarrollar una funcion preprocess(doc, pos_list), la cual recibe un documento de spacy y la lista de etiquetas POS para filtrar, el retorno es un String con el resultado preprocado.
+
+Acciones:
+- Filtrar stopwords.
+- Seleccionar únicamente palabras en algunas categorías de tipo POS
+- Normalizar el texto con unidecode.
+- Convertir a minúsculas.
+
+Parámetros
+doc: documento de spacy.
+pos_list: lista de etiquetas POS a filtrar.
+
+Retorna
+preprocess_text: texto preprocesado.
+
+===============
+Podemos crear una funcion get_pos_words(corpus, pos_list), la cual recibe una lista de documentos de spacy y debe retornar una lista de strings con las palabras filtradas y concatenadas por cada documento.
+La función debe permitir extraer las palabras de un texto que tengan etiquetas de tipo POS de grano grueso dentro de una lista de posibles valores.
+
+Parámetros
+corpus: lista de documentos de spacy.
+pos_list: lista de etiquetas POS a filtrar.
+
+Retorna
+filtered_pos: lista strings con el filtro por etiquetas POS.
+
+Es importante que el resultado por cada documento sea un string y no una lista de tokens de spacy, puede usar el método join de los strings en Python y el atributo text de los tokens de spacy.
+

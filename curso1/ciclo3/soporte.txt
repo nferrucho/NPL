@@ -1,0 +1,181 @@
+Desarrollar una funcion preproces que permita:
+- Convertir en minúsculas.
+- Eliminar acentos.
+- Eliminar todos los caracteres que no sean letras minúsculas.
+- Eliminar espacios duplicados.
+- Filtrar stopwords y palabras de 3 o menos letras.
+- Eliminar caracteres vacíos al inicio y final de cada texto.
+
+Usar el Pipeline de Spacy siguiente
+nlp = spacy.load(
+        "es_core_news_sm",
+        exclude=[
+            "tok2vec",
+            "morphologizer",
+            "parser",
+            "senter",
+            "attribute_ruler",
+            "lemmatizer",
+            "ner"
+            ]
+        )
+
+Parámetros
+text: texto crudo.
+nlp: Pipeline de spacy.
+
+Retorna
+preprocess_text: texto preprocesado.
+
+Condiciones
+Recuerde que puede usar unidecode para eliminar acentos.
+Debe construir expresiones regulares con re para eliminar caracteres especiales.
+El Pipeline de spacy debe usarse exclusivamente para eliminar stopwords.
+==============================
+A partir de las siguientes funciones existentes:
+def preprocess(text, nlp):
+    text = unidecode(text).lower()
+    text = re.sub(r'[^a-z]+', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    doc = nlp(text)
+    tokens = [token.text for token in doc if not token.is_stop and len(token.text) > 3]
+    preprocess_text = ' '.join(tokens)
+    return preprocess_text
+
+from sklearn.feature_extraction.text import CountVectorizer
+
+def bow(preprocess_corpus):
+    vect = CountVectorizer(max_features=2000)
+    X = vect.fit_transform(preprocess_corpus).toarray()
+    return X, vect
+
+def get_top_n(X, vect, n):
+   word_counts = X.sum(axis=0)
+   words = vect.get_feature_names_out()
+   
+   word_freq = pd.Series(word_counts, index=words)
+   
+   top_n_words = word_freq.sort_values(ascending=False, kind='heapsort').head(n)
+   
+   return top_n_words.keys().tolist()
+
+Desarrollar una funcion  get_top_n_year, para filtrar lo sN terminos más frecuentes de un año especifico a partir de 
+una bolsa de palabras, el vectorizador y una lista con el año de cada elemento.
+
+Parámetros
+X: representación de bolsa de palabras.
+vect: vectorizador entrenado.
+n: número de palabras a extraer.
+years: lista del año de cada documento.
+year_query: año sobre el que se debe filtrar.
+
+Retorna
+words: lista con las palabras más frecuentes por año. 
+
+Condiciones:
+- Tenga en cuenta que la lista years está alineada con la representación de bolsa de palabras X, es decir, el año en la posición 5 (years[5]) corresponde a la fila 5 de la representación (X[5]).
+- Puede reutilizar la función get_top_n
+
+Solucion CHGP
+import pandas as pd
+
+def get_top_n_year(X, vect, n, years, year_query):
+
+    # Filtrar las filas de X correspondientes al año específico
+    year_indices = [i for i, year in enumerate(years) if year == year_query]
+    
+    if not year_indices:  # Si no hay documentos de ese año
+        return []
+
+    # Filtrar la bolsa de palabras (X) para los documentos del año especificado
+    X_year = X[year_indices]
+
+    # Reutilizamos get_top_n para obtener las palabras más frecuentes en ese año
+    return get_top_n(X_year, vect, n)
+
+
+-----------------
+solucion Gemini
+-----------------
+import pandas as pd
+
+def get_top_n_year(X, vect, n, years, year_query):
+
+    # Crear un DataFrame para facilitar el filtrado
+    df = pd.DataFrame(X)
+    df['year'] = years
+
+    # Filtrar por el año de consulta
+    df_filtered = df[df['year'] == year_query]
+
+    # Obtener la representación de bolsa de palabras filtrada
+    X_filtered = df_filtered.iloc[:, :-1].values
+
+    # Aplicar la función get_top_n a los datos filtrados
+    top_words = get_top_n(X_filtered, vect, n)
+
+    return top_words
+==================================
+Implementar la función get_wordcloud
+
+Parámetros
+X: representación de bolsa de palabras.
+vect: vectorizador de sklearn.
+
+Retorna
+wc: nube de palabras.
+
+Condiciones
+El método generate_from_frequencies permite generar la nube de palabras a partir de un diccionario donde las claves son las palabras y los valores son los conteos.
+
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+
+def get_wordcloud(X, vect):
+    # Obtener los nombres de las características (palabras) desde el vectorizador
+    words = vect.get_feature_names_out()
+
+    # Sumar los conteos de todas las filas (documentos) para obtener los conteos totales por palabra
+    word_counts = X.sum(axis=0)
+
+    # Crear un diccionario de palabras y sus frecuencias
+    word_freq = dict(zip(words, word_counts))
+
+    # Generar la nube de palabras a partir de las frecuencias
+    wc = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_freq)
+
+    # Mostrar la nube de palabras
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wc, interpolation='bilinear')
+    plt.axis('off')
+    plt.show()
+
+    return wc
+==================================
+Implementar la funcion get_wordcloud_year, la cual tiene como entrada :
+
+Parámetros
+X: representación de bolsa de palabras.
+vect: vectorizador de sklearn.
+years: lista de años por cada documento.
+year_query: año a filtrar.
+
+Retorna
+wc: nube de palabras.
+
+Condiciones
+Reutilizar la  funcion get_wordcloud 
+
+def get_wordcloud_year(X, vect, years, year_query):
+    # Filtrar las filas de X correspondientes al año específico
+    year_indices = [i for i, year in enumerate(years) if year == year_query]
+    
+    if not year_indices:  # Si no hay documentos de ese año
+        print(f"No se encontraron documentos para el año {year_query}")
+        return None
+
+    # Filtrar la bolsa de palabras (X) para los documentos del año especificado
+    X_year = X[year_indices]
+
+    # Reutilizar la función get_wordcloud para generar la nube de palabras
+    return get_wordcloud(X_year, vect)

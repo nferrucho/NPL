@@ -1,0 +1,166 @@
+Requiero hacer una funcion weighted_bce para retornar la entropia cruzada, teniendo encuenta los pesos de cada clase
+Parametros
+y_true : tf.Tensor, un tensor de tamaño (m,1) con las etiquetas reales de los datos.
+y_pred : tf.Tensor, un tensor de tamaño (m,1) con las etiquetas predichas por el modelo.
+class_weights : list, una lista con los pesos asociados a cada clase.
+
+Retorno 
+w_bce : tf.Tensor, un escalar de tensorflow.
+
+Condiciones:
+* Utilizar tf.math.reduce_mean 
+* El uso de una función de pérdida de entropía cruzada ponderada implica el uso de los pesos de cada clase para hallar su valor.
+
+Tenemos como soporte las siguientes funciones:
+# Definimos nuestra funcion de pesos de cada clase
+def class_weights(y):
+    # Reemplazar con respuesta
+    # Calcular el número de elementos en cada clase
+    n0 = np.sum(y == 0)
+    n1 = np.sum(y == 1)
+
+    # Calcular los pesos
+    w_0 = (n0 + n1) / (2 * n0)
+    w_1 = (n0 + n1) / (2 * n1)
+
+    weights_list = [w_0, w_1]
+    return weights_list
+
+# Definimos el modelo de regresión logística
+def log_reg(w, b, X):
+    return 1/(1+tf.math.exp(-(tf.matmul(X, w) + b)))
+
+
+Para probar la funcion weighted_bce utilizamos el siguiente entrada
+class_weights_list = class_weights(y_train)
+w = tf.Variable([[1.0],[-1.0],[1.0],[1.0],[-1.0],[1.0],[1.0],[-1.0],[-1.0],[1.0],[1.0],[-1.0],[1.0]])
+b = tf.Variable(0.5)
+X_t = tf.constant(X_train, dtype=tf.float32)
+Y_t = tf.constant(y_train, dtype=tf.float32)
+Y_t = tf.expand_dims(Y_t, axis=-1, name=None)
+print("init_loss =",loss_fun(X_t, Y_t, w, b,class_weights_list).numpy())
+
+import tensorflow as tf
+
+# Función de pérdida de entropía cruzada ponderada
+def weighted_bce(y_true, y_pred, class_weights):
+    # Convertimos y_true a float para realizar las operaciones
+    y_true = tf.cast(y_true, dtype=tf.float32)
+    
+    # Calculamos la entropía cruzada sin ponderar
+    bce = y_true * tf.math.log(y_pred + 1e-7) + (1 - y_true) * tf.math.log(1 - y_pred + 1e-7)
+    
+    # Aplicamos los pesos según la clase (usamos y_true para seleccionar el peso)
+    weights = y_true * class_weights[1] + (1 - y_true) * class_weights[0]
+    
+    # Multiplicamos las pérdidas por los pesos y sacamos el promedio
+    w_bce = -tf.math.reduce_mean(weights * bce)
+    
+    return w_bce
+
+# Ejemplo de uso con los datos que mencionaste
+class_weights_list = class_weights(y_train)  # Calculamos los pesos de las clases
+w = tf.Variable([[1.0],[-1.0],[1.0],[1.0],[-1.0],[1.0],[1.0],[-1.0],[-1.0],[1.0],[1.0],[-1.0],[1.0]])
+b = tf.Variable(0.5)
+X_t = tf.constant(X_train, dtype=tf.float32)
+Y_t = tf.constant(y_train, dtype=tf.float32)
+Y_t = tf.expand_dims(Y_t, axis=-1)
+
+# Función de predicción de la regresión logística
+def log_reg(w, b, X):
+    return 1 / (1 + tf.math.exp(-(tf.matmul(X, w) + b)))
+
+# Predicción del modelo
+y_pred = log_reg(w, b, X_t)
+
+# Calculamos la pérdida ponderada
+init_loss = weighted_bce(Y_t, y_pred, class_weights_list).numpy()
+print("init_loss =", init_loss)
+
+======================
+puede realizar la funcion optimizer que devuelve un optimizador valido.
+Entrada
+type_opt : str, que puede tomar valores entre: SGD, Adam, RMSprop.
+learning_rate : float, correspondiente a la tasa de aprendizaje.
+
+Salida:
+opt : El optimizador con tasa de aprendizaje definida, un objeto tipo keras.optimizers.
+
+Condicion 
+Se debe especificar el tipo de optimizador y la tasa de aprendizaje que usaremos en el aprendizaje
+
+Para la ejecucion se realiza el siguiente script 
+type_opt_test = 'Adam'
+learning_rate_test = 0.5
+optimizer(type_opt_test,learning_rate_test)
+
+import tensorflow as tf
+
+def optimizer(type_opt, learning_rate):
+    # Definimos el optimizador según el tipo especificado
+    if type_opt == 'SGD':
+        opt = tf.keras.optimizers.SGD(learning_rate=learning_rate)
+    elif type_opt == 'Adam':
+        opt = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    elif type_opt == 'RMSprop':
+        opt = tf.keras.optimizers.RMSprop(learning_rate=learning_rate)
+    else:
+        raise ValueError(f"Optimizer '{type_opt}' no es válido. Use 'SGD', 'Adam' o 'RMSprop'.")
+    
+    return opt
+
+# Ejemplo de prueba
+type_opt_test = 'Adam'
+learning_rate_test = 0.5
+opt = optimizer(type_opt_test, learning_rate_test)
+print(opt)
+
+======================================
+Puede desarrollar la funcin model_predict que retorne las predicciones del odelo entrenado sobre un conjunto de prueba
+Entrada 
+log_reg: función del modelo de regresión logística previamente definido.
+w: tf.Variable, tensor de parámetros óptimos del modelo, de tamaño (n,1).
+b: tf.Variable, escalar de bias óptimo del modelo.
+X_test : tf.Tensor, tensor de tamaño (l,n), correspondiente a la matriz de datos de prueba.
+
+Salida:
+y_pred : Tensor de tamaño (l,1), con las predicciones de model para el conjunto de prueba X_test.
+
+El Script para la prueba es el siguiente:
+#TEST_CELL
+losses, w, b = train_model(epochs=10,optimizer=optimizer('RMSprop',0.5),X_t = X_t, Y_t = Y_t, class_weights_list= class_weights_list)
+X_te = tf.constant(X_test, dtype=tf.float32)
+Y_te = tf.constant(y_test, dtype=tf.float32)
+Y_te = tf.expand_dims(Y_te, axis=-1, name=None)
+y_pred = model_predict(log_reg, b, w, X_te)
+print("Primeras dos predicciones:\n", y_pred[:2].numpy())
+m = tf.keras.metrics.Accuracy()
+m.update_state(Y_te, tf.math.round(y_pred))
+print("Accuracy sobre X_test después de 10 epochs:", m.result().numpy())
+
+import tensorflow as tf
+
+def model_predict(log_reg, w, b, X_test):
+    # Utilizamos la función de regresión logística para realizar las predicciones
+    y_pred = log_reg(w, b, X_test)
+    
+    # Retornamos las predicciones
+    return y_pred
+
+# Script de prueba
+#TEST_CELL
+losses, w, b = train_model(epochs=10, optimizer=optimizer('RMSprop', 0.5), X_t=X_t, Y_t=Y_t, class_weights_list=class_weights_list)
+X_te = tf.constant(X_test, dtype=tf.float32)
+Y_te = tf.constant(y_test, dtype=tf.float32)
+Y_te = tf.expand_dims(Y_te, axis=-1, name=None)
+
+# Llamamos a la función de predicción
+y_pred = model_predict(log_reg, w, b, X_te)
+
+# Imprimimos las primeras dos predicciones
+print("Primeras dos predicciones:\n", y_pred[:2].numpy())
+
+# Calculamos la precisión
+m = tf.keras.metrics.Accuracy()
+m.update_state(Y_te, tf.math.round(y_pred))
+print("Accuracy sobre X_test después de 10 epochs:", m.result().numpy())

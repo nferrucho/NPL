@@ -1,0 +1,249 @@
+Tenemos un dataSet con las siguientes condiciones
+all_images = []
+labels = []
+for i in range(15):
+    cat_path = f"15-Scene/{i}/" if i>9 else f"15-Scene/0{i}/"
+    for im_path in os.listdir(cat_path):
+        all_images.append(np.array(tf.keras.preprocessing.image.load_img(cat_path+im_path,
+                                                                         target_size=(224, 224, 3))))
+        labels.append(i)
+X = np.array(all_images)
+y = np.array(labels)
+
+
+Separamos el conjunto en entrenamiento, validación y prueba, tomando el 60%, 20% y 20% respectivamente:
+from sklearn.model_selection import train_test_split
+X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.2, random_state = 5, stratify = y)
+X_train, X_val,  y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.25, random_state = 5, stratify = y_temp)
+
+Aplicamos nuestro preprocesamiento necesario para MobilNet
+X_train_prep = tf.keras.applications.mobilenet.preprocess_input(X_train)
+X_val_prep = tf.keras.applications.mobilenet.preprocess_input(X_val)
+X_test_prep = tf.keras.applications.mobilenet.preprocess_input(X_test)
+
+Codificamos las etiquetas one-hot:
+Y_train = tf.keras.utils.to_categorical(y_train)
+Y_val = tf.keras.utils.to_categorical(y_val)
+Y_test = tf.keras.utils.to_categorical(y_test)
+
+Realizar la funcion def data_augmentation con los siguientes parametros, utilizando tf.keras.preprocessing.image.ImageDataGenerator para completar la función data_augmentation.
+
+Entradas:
+X_train: np.array, los datos de entrenamiento como un arreglo de tamaño (m, h, w, c), siendo m el número de muestras, y h,w,c la altura, ancho, y número de canales de cada imagen.
+y_train: np.array, arreglo de tamaño (m,c) con las etiquetas de los datos de entrenamiento con codificación one hot, siendo c el número de clases diferntes del dataset.
+X_val: np.array, de tamaño (n, h, w, c), siendo n el número de muestras de los datos de validación.
+y_val: np.array, arreglo de tamaño (n,c) con las etiquetas de los datos de validación con codificación one hot.
+X_test: np.array, de tamaño (p, h, w, c), siendo p el número de muestras de los datos de prueba.
+y_test: np.array, arreglo de tamaño (p,c) con las etiquetas de los datos de prueba con codificación one hot.
+width_range: float, el rango de variación del ancho.
+height_range: float, el rango de variación de la altura.
+zoom: float, el rango de variación del zoom.
+h_flip: boolean, para definir si se hace giro horizontal.
+fill: str, para definir como rellenar espacios vacios que se generen con las modificacines.
+
+Salida:
+X_train_aug: objeto keras.preprocessing.image.NumpyArrayIterator con la configuración de augmentation para el conjunto de entrenamiento.
+X_val_aug: objeto keras.preprocessing.image.NumpyArrayIterator con la configuración de augmentation para el conjunto de validación.
+X_test_aug: objeto keras.preprocessing.image.NumpyArrayIterator con la configuración de augmentation para el conjunto de prueba.
+
+Condiciones:
+1: Los tres generadores deben aplicar un reescalamiento rescale=1./255.
+
+2: Los generadores de los conjuntos de validación y prueba no deben aplicar cambios aparte del rescale.
+
+-----------------------------
+
+Completar la funcion pretrained_model que retorna el modelo completo, con las capas del modelo congeladas, y sobre él las capas extra definidas asi:
+Capa de global average pooling.
+Capa densa con activación relu.
+Capa de dropout.
+Capa densa de salida (15 clases) con activación softmax.
+
+Entrada:
+train_base_model: boolean, para definir si se entrenan las capas del modelo base o extractor.
+units: int, el número de neuronas de la capa densa.
+dropout: float, la proporción de dropout.
+
+Salida:
+model: tf.keras.Model, un modelo basado en MobileNet para clasificación de 15 categorias.
+
+def pretrained_model(freeze_base_model, units, dropout):
+    # Fijamos una semilla para efectos de reproducibiidad
+    np.random.seed(0)
+    tf.keras.utils.set_random_seed(0)
+    # definir el modelo Mobilenet
+    extractor = -1
+    # definir si congelamos el extractor de características
+    for layer in extractor.layers:
+        pass
+    # crear una capa de pooling para consolidar los feature maps de salida en
+    # 1024 valores
+    pool = -1
+    # agregar una capa densa
+    dense = -1
+    # agregar dropout para regularización
+    drop = -1
+    # agrega una capa de salida
+    output = -1
+    # definimos nuestro modelo de transfer learning
+    model = tf.keras.models.Model(inputs=[extractor.input], outputs=[output])
+    # compilamos el modelo
+    return model
+
+---------------------------------
+
+compilamos nuestro modelo con la siguente funcion utlizando el optimizador Adam.
+def compile_model(model, l_r, metrics):
+    # Fijamos una semilla para efectos de reproducibiidad
+    np.random.seed(0)
+    tf.keras.utils.set_random_seed(0)
+    # Ingrese su código aquí
+    model.compile(loss="categorical_crossentropy",
+                  optimizer=tf.optimizers.Adam(learning_rate=l_r),
+                  metrics=["accuracy"])
+    return model
+
+----------------------------------
+Complete la función train_model que recible un modelo compilado y lo entrena. Debe usar ModelCheckpoint como Callback, monitoreando la función de pérdida en el conjunto de validación.
+
+Entrada:
+model: tf.keras.Model, un modelo de Tensorflow compilado.
+train_gen: un generador NumpyArrayIterator de datos de entrenamiento.
+val_gen: un generador NumpyArrayIterator de datos de validación.
+epochs: int, número máximo de epochs para entrenar el modelo.
+weights: str, el nombre del archivo h5 donde se guardarán los mejores pesos del modelo.
+
+Salida:
+model: tf.keras.Model, modelo basado en MobileNet para clasificación de 15 categorias entrenado.
+history: un objeto tipo History de tensorflow con la información del entrenamiento del modelo.
+
+Condicion: Recuerde que en este notebook estamos usando un batch_size de 32.
+
+def train_model(model, train_gen, val_gen, epochs, weights):
+    # Fijamos una semilla para efectos de reproducibiidad
+    np.random.seed(0)
+    tf.keras.utils.set_random_seed(0)
+    # Complete el código desde aquí:
+    # Definimos el callback
+    best_callback = tf.keras.callbacks.ModelCheckpoint(filepath=weights,
+                                                      monitor="val_loss",
+                                                      verbose=True,
+                                                      save_best_only=True,
+                                                      save_weights_only=True,
+                                                      mode="min")
+    # Entrenamos el modelo
+    history = model.fit(
+                        x=train_gen,
+                        validation_data=val_gen,
+                        epochs=epochs,
+                        steps_per_epoch=len(train_gen)-1,
+                        validation_steps=len(val_gen), 
+                        batch_size=32,
+                        callbacks=[best_callback])
+    return model, history
+-----------------------------------------
+Para evaluar el modelo.
+Complete la función evaluate_model que recible un modelo entrenado y lo evalua en un conjunto de prueba.
+
+Entrada:
+
+model: tf.keras.Model, un modelo de Tensorflow entrenado.
+test_gen: un generador tipo NumpyArrayIterator de datos de prueba.
+Salida:
+
+metrics: list, una lista con los valores de la función de pérdida y las métricas evaluadas en el conjunto de prueba.    
+
+def evaluate_model(model, test_gen):
+    # Fijamos una semilla para efectos de reproducibiidad
+    np.random.seed(0)
+    tf.keras.utils.set_random_seed(0)
+    metrics = -1
+    return metrics
+
+----------------------------------------
+Complete la función warm_up como el definido en funciones anteriores, con una capa densa de 32 neuronas y una capa de dropout de 0.2. Recuerde que se deben congelar las capas del modelo base. El modelo debe optimzarse con Adam usando una tasa de aprendizaje de 0.001, y aparte de la función de pérdida, debe medir el accuracy en cada epoch.
+
+Entrada:
+train_gen: un generador NumpyArrayIterator de datos de entrenamiento.
+val_gen: un generador NumpyArrayIterator de datos de validación.
+epochs: int, número de épocas de entrenamiento.
+
+Salida:
+model: tf.keras.Model, modelo basado en MobileNet para clasificación de 15 categorias entrenado.
+history: un objeto tipo History de tensorflow con la información del entrenamiento del modelo.
+
+Condiciones
+1: Para esta función bebe usar las funciones definas anteriormente.
+2: Los mejores pesos del modelo se deben guardar en un archivo llamado warming_up.weights.h5.
+
+def warm_up(train_gen, val_gen, epochs):
+    # Complete desde aquí el código
+    # Crea el modelo
+    model = pretrained_model(
+                                train_base_model=-1,
+                                units=-1,
+                                dropout=-1
+                            )
+    # Compila el modelo
+    model = compile_model(
+                                model=-1,
+                                l_r=-1,
+                                metrics=-1
+                            )
+    # Entrena el modelo
+    model, history = train_model(
+                                model=-1,
+                                train_gen=-1,
+                                val_gen=-1,
+                                epochs=-1,
+                                weights=-1
+                                )
+    return model, history
+
+ ---------------------------------------------------
+ Es necesario compilar de nuevo el modelo para reconfigurar algunos parámetros del modelo antes de hacer fine tuning. Complete la función compile_model_ft, que recibe un modelo, y configura todas las capas para que puedan entrenarse. Luego, debe usar de nuevo la función compile_model de ejercios anteriores para compilar el modelo con una tasa de aprendizaje de  1×10−5 , configurando accuracy como métrica a ser evaluada en cada epoch.
+
+Entrada:
+model: tf.keras.Model, modelo basado en MobileNet para clasificación de 15 categorias.
+
+Salida:
+model: tf.keras.Model, modelo basado en MobileNet para clasificación de 15 categorias, compilado, con todas las capas entrenables.
+
+---------------------------------------------------
+Ahora tenemos que entrenar de nuevo. Complete la función train_model_ft que recibe el modelo compilado con todas las capas entrenables, carga los pesos obtenidos durante el warming-up, y entrena el modelo. Para este entrenamiento debe usar, aparte de ModelCheckpoint, el callback EarlyStopping para que el entrenamiento se detenga después de 10 epochs sin mejora en la métrica val_loss.
+
+Entrada:
+model: tf.keras.Model, un modelo de Tensorflow compilado.
+train_gen: un generador NumpyArrayIterator de datos de entrenamiento.
+val_gen: un generador NumpyArrayIterator de datos de validación.
+epochs: int, número máximo de epochs para entrenar el modelo.
+weights: str, el nombre del archivo con los pesos obtenidos del warming up.
+
+Salida:
+model: tf.keras.Model, modelo basado en MobileNet para clasificación de 15 categorias, afinado con nuestro conjunto de datos.
+history: un objeto tipo History de tensorflow con la información del entrenamiento del modelo.
+Nota: los callbacks están parcialmente definidos en la función, usted debe completarlos.
+
+Condiciones: 
+Después de los callbacks, y antes de entrenar el modelo, recuerde que debe cargar los pesos del warming up con la función load_weights.   
+
+def train_model_ft(model, train_gen, val_gen, epochs, weights):
+    # Fijamos una semilla para efectos de reproducibiidad
+    tf.keras.utils.set_random_seed(0)
+    # definimos el callback
+    best_callback = tf.keras.callbacks.ModelCheckpoint(filepath="fine_tuning.h5",
+                                                      monitor=-1,
+                                                      verbose=True,
+                                                      save_best_only=True,
+                                                      save_weights_only=True,
+                                                      mode="min")
+
+    stopping = tf.keras.callbacks.EarlyStopping(
+                                                      monitor=-1,
+                                                      patience=-1,
+                                                      verbose=0,
+                                                      mode=-1,
+                                                      restore_best_weights=True,
+                )
+
+    return model, history

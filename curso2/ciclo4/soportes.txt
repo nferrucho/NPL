@@ -1,0 +1,186 @@
+Tenemos un conjunto de datos con la siguiente presentacion
+label 	 sentence 
+ ----	----------
+0 	 dedicated 'humans of new york' fans raise money to send underserved kids on harvard visit 
+0 	 objection, your honor 
+0 	 paul ryan renews call to suspend hillary clinton's classified briefings 
+1 	 woman on gym treadmill cranks incline up to 90 degrees 
+
+Son en total 26709 muestras
+
+
+Hacemos una separacion de nuestros datos para realizar un entrenamiento, para evaluar el desempeño del modelo. Asi:
+from sklearn.model_selection import train_test_split
+X_temp, X_test, y_temp, y_test = train_test_split(sentences, labels, test_size=0.2, stratify = labels, random_state = 30)
+X_train, X_val,  y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.25, stratify = y_temp, random_state = 30)
+
+
+Hacemos una codificación one hot de las etiquetas de entrenamiento y validación:
+y_train = tf.keras.utils.to_categorical(y_train)
+y_val = tf.keras.utils.to_categorical(y_val)
+
+
+Aplique el preprocesamiento requerido para usar una arquitectura DistilBERT sobre los conjuntos definidos de entrenamiento, validación y prueba. Complete la función tokenize, que recibe como argumentos un conjnuto de datos y los parámetros necesarios para tokenizarlos. La función debe retornar un objeto tipo BatchEncoding como lo vimos en el taller guiado. Utilice AutoTokenizer y la tokenización del modelo "distilbert-base-uncased".
+
+Entradas:
+model_name: un str que representa el nombre del tokenizer del modelo pre-entrenado a definir.
+X, list, una lista de secuencuas de texto.
+truncate, boolean, variable booleana para definir si los textos se truncan o no.
+padd, boolean, variable booleana para definir si los textos se rellenan o no.
+tensor, un str que puede ser np, tf o pt para indicar el tipo de tensor que debe devolver el tokenizador.
+
+Salida:
+encodings: un objeto tipo BatchEncoding para tokenizar textos para DistilBERT.
+
+-----------------------
+from transformers import AutoTokenizer
+def tokenize(model_name, X, truncate, padd, tensor):
+    
+    padding=True if padd else False 
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    encodings = tokenizer(
+        X,
+        truncation=truncate,
+        padding=padd,
+        return_tensors=tensor)
+      
+    return encodings 
+
+-----------------------
+Implemente una función llamada pretrained_model que reciba como entrada un nombre de modelo y retorne una instancia de ese modelo pre-entrenado utilizando la biblioteca Transformers de HuggingFace. La función debe utilizar TFAutoModelForSequenceClassification para cargar el modelo y devolverlo.
+
+Entradas:
+
+model_name: un str que representa el nombre del modelo pre-entrenado a cargar.
+Salida:
+
+model: una instancia del modelo pre-entrenado cargado utilizando TFAutoModelForSequenceClassification.
+
+-----------------------
+from transformers import TFAutoModelForSequenceClassification
+def pretrained_model(model_name):
+    model = TFAutoModelForSequenceClassification.from_pretrained(model_name)
+    return model
+-----------------------    
+Igual que con BERT, DistilBERT se define por defecto con dos neuronas de salida con activación linea. Complete entonces la función compile que prepara el modelo para el entrenamiento. La función debe recibir como entrada un modelo, un optimizador y una tasa de aprendizaje, y luego compila el modelo con una función de pérdida CategoricalCrossentropy.
+
+Entradas:
+model: una instancia del modelo a entrenar tipo TFAutoModelForSequenceClassification.
+optimizer: una instancia del optimizador de tipo keras.optimizers a utilizar durante el entrenamiento.
+l_r: float, un número flotante que representa la tasa de aprendizaje.
+
+Salida:
+model: una instancia compilada del modelo tipo TFAutoModelForSequenceClassification.
+
+Condiciones:
+Utilice el método .assign() para ajustar la tasa de aprendizaje del optimizador al valor proporcionado.
+Recuerde definir from_logits=True dentro de la función de pérdida.
+
+-------------------------
+def compile_model(model, optimizer, l_r):
+    # Asigna la tasa de aprendizaje al optimizador
+    optimizer.learning_rate.assign(l_r)
+    
+    # Define la función de pérdida
+    # Importa CategoricalCrossentropy desde tensorflow.keras.losses
+    loss = tf.keras.losses.CategoricalCrossentropy(from_logits=True) 
+    
+    # Compila el modelo con el optimizador y la función de pérdida
+    model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
+    return model
+-------------------------
+Complete la función llamada train_model que entrena un modelo utilizando un conjunto de datos de entrenamiento. La función debe recibir como un modelo, los datos de entrenamiento, el número de épocas y el tamaño del _batch, y devolver el modelo entrenado.
+
+Entradas:
+
+model: una instancia del modelo a entrenar tipo TFAutoModelForSequenceClassification
+X_train: un objeto tipo BatchEncoding para tokenizar textos.
+y_train: un arreglo de numpy np.array que representa las etiquetas de los datos de entrenamiento.
+X_val: un objeto tipo BatchEncoding para tokenizar textos.
+y_val: un arreglo de numpy np.array que representa las etiquetas de los datos de validación.
+epochs: int, un número entero que representa el número de épocas de entrenamiento.
+batch_size: int, un número entero que representa el tamaño del batch.
+train_base: boolean, una variable booleana para definir si se congelan o no las capas del modelo base (dependiendo si se quiere hacer warming up o fine tuning).
+
+Salida:
+history: un objeto tipo History de tensorflow con la información del entrenamiento del modelo.
+model: una instancia del modelo entrenado tipo TFAutoModelForSequenceClassification
+
+Para implementar la función, utilice un ciclo for para controlar el atributo trainable de las capas del modelo, excepto la capa de salida.
+
+def train_model(model,
+                    X_train, y_train,
+                    X_val, y_val,
+                    epochs,
+                    batch_size,
+                    train_base):
+    history = -1
+    return history, model
+
+----------------------------------------
+Desrrollar la funcion fine_tuning. Esta función recible los datos de entrenamiento y valdación, la tasa de aprendizaje del warming up y la tasa de aprendizaje del fine tuning, así como las epochs dedicadas a cada etapa del entrenamiento. La función debe crear un modelo, compilarlo para warming up, realizar el warming up, y luego compilar el modelo de nuevo para fine tuning (liberando los pesos de todas las capas), y entrenar de nuevo.
+
+Entrada:
+X_train: un objeto tipo BatchEncoding para tokenizar textos.
+y_train: un arreglo de numpy np.array que representa las etiquetas de los datos de entrenamiento.
+X_val: un objeto tipo BatchEncoding para tokenizar textos.
+y_val: un arreglo de numpy np.array que representa las etiquetas de los datos de validación.
+l_r_warming_up: float, la tasa de aprendizaje a usar durante el calentamiento.
+epochs_warming_up: int, un número entero que representa el número de épocas de entrenamiento usadas en el calentamiento.
+l_r_fine_tuning: float, la tasa de aprendizaje a usar durante el fine tuning.
+epochs_fine_tuning: int, un número entero que representa el número de épocas de entrenamiento usadas en el fine tuning.
+
+Salida:
+history: un objeto tipo History de tensorflow con la información del entrenamiento del modelo.
+model: una instancia del modelo entrenado tipo TFAutoModelForSequenceClassification
+
+Condiciones:
+- Debe definir el modelo usando la función pretrained_model antes desarrollada, cargando 'distilbert-base-uncased'.
+- Debe compilar el modelo dos veces usando la función compile_model antes desarrollada. La primera vez será para configurar el modelo para el warming up. La segunda vez que compile será después de haber hecho el warming up, para habilitar el entrenamiento de todas las capas y cambiar la tasa de aprendizaje.
+- Analogamente, debe usar dos veces la función train_model antes desarrollada, una vez para warming up, y la segunda vez para fine tuning.
+- tf.keras.optimizers.Adam() debe ser el optimizador de todos los entrenamientos.
+- La función debe usar un batch_size de 32 en todos los entrenamientos.    
+
+------------------------
+    # Paso 1: Cargar el modelo preentrenado
+    model = pretrained_model('distilbert-base-uncased')
+
+    # Paso 2: Compilar el modelo para warming up
+    optimizer = tf.keras.optimizers.Adam(learning_rate=l_r_warming_up)
+    model = compile_model(model, optimizer, l_r=l_r_warming_up)
+
+    # Paso 3: Entrenar el modelo en warming up (última capa entrenable)
+    history_warmup, model = train_model(
+        model=model,
+        X_train=X_train,
+        y_train=y_train,
+        X_val=X_val,
+        y_val=y_val,
+        epochs=epochs_warming_up,
+        batch_size=32,
+        train_base=False  # Congela la base para warming up
+    )
+
+    # Paso 4: Cambiar a fine tuning y compilar con nueva tasa de aprendizaje
+    optimizer.learning_rate.assign(l_r_fine_tuning)
+    model = compile_model(model, optimizer, l_r=l_r_fine_tuning)
+
+    # Paso 5: Entrenar el modelo en fine tuning (todas las capas entrenables)
+    history_fine_tuning, model = train_model(
+        model=model,
+        X_train=X_train,
+        y_train=y_train,
+        X_val=X_val,
+        y_val=y_val,
+        epochs=epochs_fine_tuning,
+        batch_size=32,
+        train_base=True  # Descongela todas las capas para fine tuning
+    )
+
+    # Combinar historiales en un solo objeto
+    history = history_warmup  # Inicializamos con el historial del warming up
+    for key in history.history.keys():
+        history.history[key].extend(history_fine_tuning.history[key])  # Añadir registros del fine tuning
+
+    return history, model

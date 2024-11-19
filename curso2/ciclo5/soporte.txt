@@ -1,0 +1,288 @@
+Vamos a resolver un problema de encododer y decoder.
+
+Tenemos un conjunto de datos de imagenes (400)imagenes de rostros 
+Nuestra funcion de descarga es la siguiente:
+
+from sklearn.datasets import fetch_olivetti_faces
+
+faces = fetch_olivetti_faces(shuffle = True, random_state= 55)
+X, y = faces.data, faces.target
+X = X.reshape(400,64,64,1)
+
+la imagenes ha quedado almacenadas en un objeto np.array de tamaño (400,64,64,1). Cada imagen es de tamalo 64X64 y tiene un solo canal, esto indica que cada imagen consta de 4096 pixeles, con valores de 0 y 1.
+
+Complete la función data_generator que crea conjuntos de datos de entrenamiento y prueba a partir de un conjunto de imágenes X. La función dividirá las imágenes en conjuntos de entrenamiento y prueba y creará conjuntos de datos de TensorFlow con un tamaño de batch especificado.
+
+Entrada:
+X: np.array, un arreglo de NumPy que contiene las imágenes.
+test_size: float, la proporción de imágenes que se deben asignar al conjunto de prueba (por ejemplo, 0.2 para el 20%).
+batch_size: int, el tamaño del batch para los conjuntos de datos de entrenamiento y prueba.
+
+Salida:
+train_dataset: tf.data.Dataset, un conjunto de datos de TensorFlow para entrenamiento.
+test_dataset: tf.data.Dataset, un conjunto de datos de TensorFlow para prueba.
+
+Condiciones:
+1. Utilice train_test_split de sklearn para dividir las imágenes en conjuntos de entrenamiento y prueba con la proporción especificada en test_size. Además, fije la semilla aleatoria con random_state=42.
+2. Cree un conjunto de datos de TensorFlow train_dataset a partir del conjunto de entrenamiento usando tf.data.Dataset.from_tensor_slices.
+3. Mezcle y divida en batches el train_dataset usando la función shuffle y el batch_size especificado.
+4. Cree un conjunto de datos de TensorFlow test_dataset a partir del conjunto de prueba usando tf.data.Dataset.from_tensor_slices.
+5. Mezcle y divida en batches el test_dataset usando la función shuffle y el batch_size especificado.
+
+------------------
+def data_generator(X, test_size, batch_size):
+    # Fijamos una semilla para efectos de reproducibiidad
+    np.random.seed(0)
+    tf.keras.utils.set_random_seed(0)
+    
+    # Dividir los datos en conjuntos de entrenamiento y prueba
+    X_train, X_test = train_test_split(X, test_size=test_size, random_state=42)
+    
+    # Crear el conjunto de datos de entrenamiento de TensorFlow
+    train_dataset = tf.data.Dataset.from_tensor_slices(X_train)
+    train_dataset = train_dataset.shuffle(buffer_size=1000).batch(batch_size)
+    
+    # Crear el conjunto de datos de prueba de TensorFlow
+    test_dataset = tf.data.Dataset.from_tensor_slices(X_test)
+    test_dataset = test_dataset.shuffle(buffer_size=1000).batch(batch_size)
+
+    return train_dataset, test_dataset
+ -------------------
+ 
+ Complete la función build_encoder para que construya un codificador de red neuronal. El codificador deberá tomar imágenes de entrada de tamaño 64x64x1 y producir dos vectores de dimensión latent_dim: z_mean y z_log_var.
+
+Entrada:
+latent_dim: int, la dimensión del espacio latente.
+
+Salida:
+encoder: tf.keras.Model, un modelo de TensorFlow que representa el codificador.
+
+Condiciones:
+
+1. Crear una entrada de modelo con tamaño (64, 64, 1).
+2. Añadir una capa Conv2D con 16 filtros, kernel de tamaño (5, 5), strides (2, 2), padding "same" y función de activación "relu". Conecte esta capa a las entradas.
+3. Añadir una capa Conv2D con 32 filtros, kernel de tamaño (3, 3), strides (2, 2), padding "same" y función de activación "relu". Conecte esta capa a la capa anterior.
+4. Añadir otra capa Conv2D con 64 filtros, kernel de tamaño (3, 3), strides (2, 2), padding "same" y función de activación "relu". Conecte esta capa a la capa anterior.
+5. Añadir una cuarta capa Conv2D con 128 filtros, kernel de tamaño (3, 3), strides (2, 2), padding "same" y función de activación "relu". Conecte esta capa a la capa anterior.
+6. Aplique una capa Flatten a la salida de la cuarta capa Conv2D.
+7. Crear dos capas Dense separadas, con latent_dim unidades cada una. Conecte ambas capas a la salida de la capa Flatten anterior. Estas capas representarán z_mean y z_log_var.   
+
+def build_encoder(latent_dim):
+    inputs = tf.keras.layers.Input(shape=(64, 64, 1))
+
+    # Primera capa Conv2D
+    x = tf.keras.layers.Conv2D(16, kernel_size=(5, 5), strides=(2, 2), padding="same", activation="relu")(inputs)
+    
+    # Segunda capa Conv2D
+    x = tf.keras.layers.Conv2D(32, kernel_size=(3, 3), strides=(2, 2), padding="same", activation="relu")(x)
+    
+    # Tercera capa Conv2D
+    x = tf.keras.layers.Conv2D(64, kernel_size=(3, 3), strides=(2, 2), padding="same", activation="relu")(x)
+    
+    # Cuarta capa Conv2D
+    x = tf.keras.layers.Conv2D(128, kernel_size=(3, 3), strides=(2, 2), padding="same", activation="relu")(x)
+    
+    # Capa Flatten
+    x = tf.keras.layers.Flatten()(x)
+    
+    # Capa Dense para z_mean
+    z_mean = tf.keras.layers.Dense(latent_dim, name="z_mean")(x)
+    
+    # Capa Dense para z_log_var
+    z_log_var = tf.keras.layers.Dense(latent_dim, name="z_log_var")(x)
+    
+
+    encoder = tf.keras.models.Model(inputs, outputs=[z_mean, z_log_var])
+    return encoder
+-------------------------
+
+Complete la función build_decoder que construye un decodificador. El decodificador deberá tomar un vector de dimensión latent_dim como entrada y producir una imagen de salida de tamaño 64x64x1.
+
+Entrada:
+latent_dim: int, la dimensión del espacio latente.
+
+Salida:
+decoder: tf.keras.Model, un modelo que representa el decodificador.
+
+Codiciones:
+1. Crear una entrada de tamaño latent_dim.
+2. Añadir una capa Dense con 4 * 4 * 128 unidades y función de activación "relu". Conecte esta capa a las entradas.
+3. Aplique una capa Reshape a la salida de la capa Dense para convertir el tensor en una forma de (4, 4, 128).
+4. Añadir una capa Conv2DTranspose con 128 filtros, kernel de tamaño (3, 3), strides (2, 2), padding "same" y función de activación "relu". Conecte esta capa a la capa Reshape.
+5. Añadir otra capa Conv2DTranspose con 64 filtros, kernel de tamaño (3, 3), strides (2, 2), padding "same" y función de activación "relu". Conecte esta capa a la capa anterior.
+6. Añadir una tercera capa Conv2DTranspose con 32 filtros, kernel de tamaño (3, 3), strides (2, 2), padding "same" y función de activación "relu". Conecte esta capa a la capa anterior.
+7. Añadir una cuarta capa Conv2DTranspose con 16 filtros, kernel de tamaño (5, 5), strides (2, 2), padding "same" y función de activación "relu". Conecte esta capa a la capa anterior.
+8. Añadir una última capa Conv2DTranspose con 1 filtro, kernel de tamaño (3, 3), padding "same", sin función de activación. Conecte esta capa a la salida de la tercera capa Conv2DTranspose.
+
+# FUNCIÓN CALIFICADA build_decoder
+def build_decoder(latent_dim):
+    inputs = tf.keras.layers.Input(shape=(latent_dim,))
+
+    # Capa Dense - Use tf.keras.layers.Dense instead of tf.keras.Dense
+    x = tf.keras.layers.Dense(4 * 4 * 128, activation="relu")(inputs)
+    
+    # Capa Reshape para convertir el tensor en (4, 4, 128)
+    x = tf.keras.layers.Reshape((4, 4, 128))(x)
+    
+    # Primera capa Conv2DTranspose
+    x = tf.keras.layers.Conv2DTranspose(128, kernel_size=(3, 3), strides=(2, 2), padding="same", activation="relu")(x)
+    
+    # Segunda capa Conv2DTranspose
+    x = tf.keras.layers.Conv2DTranspose(64, kernel_size=(3, 3), strides=(2, 2), padding="same", activation="relu")(x)
+    
+    # Tercera capa Conv2DTranspose
+    x = tf.keras.layers.Conv2DTranspose(32, kernel_size=(3, 3), strides=(2, 2), padding="same", activation="relu")(x)
+    
+    # Cuarta capa Conv2DTranspose
+    x = tf.keras.layers.Conv2DTranspose(16, kernel_size=(5, 5), strides=(2, 2), padding="same", activation="relu")(x)
+    
+    # Última capa Conv2DTranspose para obtener la imagen de salida
+    x = tf.keras.layers.Conv2DTranspose(1, kernel_size=(3, 3), padding="same")(x)
+
+    decoder = tf.keras.models.Model(inputs, outputs=x)
+    return decoder
+
+------------------------------
+funcion de perdida:
+La función log_normal_pdf recibe tres parámetros: sample, mean, logvar y un parámetro opcional llamado raxis. Los parámetros mean y logvar son la media y la log-varianza de la distribución normal multivariante, respectivamente. El parámetro sample es una muestra de la distribución normal multivariante que se desea evaluar.
+
+La función calcula el logaritmo de la probabilidad de que sample haya sido generado por una distribución normal multivariante con media mean y log-varianza logvar.
+
+optimizer = tf.keras.optimizers.Adam(1e-4)
+
+def log_normal_pdf(sample, mean, logvar, raxis=1):
+  """
+  Esta función calcula la probabilidad logarítmica de una distribución normal
+  para un conjunto de muestras sample con una media mean y varianza logarítmica
+  logvar. raxis es el eje a lo largo del cual se realiza la suma. La función
+  devuelve la suma de las probabilidades logarítmicas de las muestras.
+  """
+  log2pi = tf.math.log(2. * np.pi)
+  return tf.reduce_sum(
+      -.5 * ((sample - mean) ** 2. * tf.exp(-logvar) + logvar + log2pi),
+      axis=raxis)  
+
+----------------------------
+reparameterize
+
+Esta función permite obtener una muestra aleatoria de una distribución normal multivariante a partir de su media y log-varianza mediante la técnica de reparameterización. reparameterize recibe dos parámetros: mean y logvar. La idea de la reparameterización es muestrear una variable aleatoria de una distribución parametrizada por mean y logvar mediante una transformación determinista. En este caso, la transformación utilizada es la siguiente:
+
+eps = tf.random.normal(shape=mean.shape)
+z = eps * tf.exp(logvar * .5) + mean
+La variable eps es una muestra aleatoria de una distribución normal estándar y z es la muestra aleatoria de la distribución normal multivariante parametrizada por mean y logvar.
+
+
+Complete la función vae_loss que calcule la función de pérdida para un modelo de autoencoder variacional. La función debe recibir como entrada un codificador, un decodificador y los datos de entrada, y luego utilizarlos para calcular la función de pérdida.
+
+Entradas:
+encoder: una instancia del codificador tipo tf.keras.Model.
+decoder: una instancia del decodificador tipo tf.keras.Model.
+x: los datos de entrada tipo tf.Tensor.
+
+Salida:
+loss: el valor de la función de pérdida, tipo tf.Tensor.
+
+Condiciones: 
+1. Para implementar la función, utilice los datos de entrada y el codificador para calcular la media mean y la varianza de la distribución latente logvar. 
+2. Use la función reparameterize para obtener la muestra latente z y decodificarla con el decoder. 
+3. Luego, utilice estos valores para calcular la función de pérdida del modelo.
+
+Un script para revisar la funcion vae_loss es la siguiente:
+tf.random.set_seed(5);
+random_image = tf.random.normal([1,64,64,1], 0, 1, tf.float32, seed=1)
+print("Imagen aleatoria", random_image[0,0:3,0:3,0])
+test_loss = vae_loss(encoder_test,
+                      decoder_test,
+                      random_image
+                      )
+
+----------------
+Hemos ajustado la funcion vae_loss asi:
+def vae_loss(encoder, decoder, x):
+    # Su código empieza aquí:
+    mean, logvar = encoder(x)
+    
+    # Reparameterizar para obtener la muestra latente z
+    z = reparameterize(mean, logvar)
+    
+    x_reconstructed = decoder(z) 
+    
+    # Calcular la pérdida de reconstrucción (usando log_normal_pdf)
+    # Assuming x_reconstructed is the mean of the distribution
+    reconstruction_loss = -tf.reduce_mean(log_normal_pdf(x, x_reconstructed, tf.zeros_like(logvar))) 
+
+    # Calcular la pérdida de regularización (Kullback-Leibler divergence)
+    kl_loss = -0.5 * tf.reduce_mean(tf.reduce_sum(1 + logvar - tf.square(mean) - tf.exp(logvar), axis=1))
+    
+    # Pérdida total
+    loss = reconstruction_loss + kl_loss
+    return loss
+
+ Las funciones dependientes son las siguientes
+
+ def log_normal_pdf(sample, mean, logvar, raxis=1):
+    log2pi = tf.math.log(2. * np.pi)
+    return tf.reduce_sum(
+        -.5 * ((sample - mean) ** 2. * tf.exp(-logvar) + logvar + log2pi),
+        axis=raxis)
+
+def reparameterize(mean, logvar):
+    eps = tf.random.normal(shape=mean.shape)
+    return eps * tf.exp(logvar * .5) + mean                  
+---------------------------
+
+Complete la función train_vae, que entrena el autoencoder. La función debe recibir como entrada un codificador, un decodificador, un conjunto de datos de entrenamiento y el número de épocas, y luego utilizarlos para entrenar el modelo.
+
+Entradas:
+encoder: una instancia del codificador tipo tf.keras.Model.
+decoder: una instancia del decodificador tipo tf.keras.Model.
+train_dataset: un conjunto de datos de entrenamiento tipo tf.data.Dataset.
+epochs: el número de épocas de entrenamiento tipo int.
+
+Salida:
+encoder: el codificador entrenado tipo tf.keras.Model.
+decoder: el decodificador entrenado tipo tf.keras.Model.
+
+Condiciones: 
+1. Para implementar la función, utilice un optimizador Adam con una tasa de aprendizaje de 1e-3. 
+2. Utilice el método GradientTape para calcular los gradientes de la función de pérdida con respecto a los parámetros del modelo, y luego utilice el optimizador para actualizar los parámetros del modelo. 
+3. Entrene el modelo durante el número de épocas especificado.     
+
+-------------------------------
+Complete la función reconstruct_faces que reconstruye caras utilizando el autoencoder entrenadoo. La función debe recibir como entrada un codificador, un decodificador y una imagen de prueba, y luego utilizarlos para reconstruir la cara de la imagen de prueba.
+
+Entradas:
+encoder: una instancia del codificador tipo tf.keras.Model.
+decoder: una instancia del decodificador tipo tf.keras.Model.
+test_image: una imagen de prueba tipo tf.Tensor.
+
+Salida:
+reconstructed_face: la cara reconstruida, tipo tf.Tensor.
+
+Condiciones: 
+1. Tenga en cuenta las funciones creadas antiormente
+2. Para implementar la función, utilice el codificador y el decodificador para calcular la media y la desviación estándar de la distribución latente de la imagen de prueba. 
+3. Utilice la función reparameterize para muestrear una muestra latente de la distribución utilizando el truco de reparametrización. 
+4. Utilice el decodificador para reconstruir la imagen a partir de la muestra latente, y luego utilice la función tf.sigmoid para normalizar los valores de los píxeles de la imagen reconstruida.
+
+---------------------------
+Vamos a hacer una transformación entre caras. Complete la función face_interpolation, que realiza una interpolación de caras utilizando un modelo de autoencoder variacional. La función debe recibir como entrada un codificador, un decodificador, dos caras y el número de pasos de interpolación, y luego utilizarlos para realizar la interpolación de caras, es decir, mostrar los pasos de la transformación de una cara a otra.
+
+Entradas:
+encoder: una instancia del codificador tipo tf.keras.Model.
+decoder: una instancia del decodificador tipo tf.keras.Model.
+face1: una cara tipo tf.Tensor.
+face2: una cara tipo tf.Tensor.
+num_steps: el número de pasos de interpolación tipo int.
+
+Salida:
+faces: list, una lista de tamaño num_steps, de caras interpoladas entre face1y face2, cada una tipo tf.Tensor.
+
+Condiciones:
+1. Utilizar las funciones generadas anteriormente.
+2. Para lograr la interpolación, codifique las caras face1 y face2 para calcular la media y desviación latente de cada una. Como vimos en el ejercicio anterior, a partir de la media y desviación se puede reconstruir la imagen original.
+3. Sean entonces z_mean_1, z_mean_2 y z_log_var_1, z_log_var_2 las medias y desviaciones de face1 y face2 respectivamente. Los pasos de la interpolación se logran reconstruyendo caras a partir de la interpolación lineal entre z_mean_1 y z_mean_2 y entre z_log_var_1, z_log_var_2.
+4. La interpolación lineal (o combinación lineal convexa) entre z_mean_1 ( zμ1 ) y z_mean_2 ( zμ2 ) está compuesta por el conjunto  {zμ1⋅(1−α)+zμ2⋅α;∀α∈[0,1]} . Algo análogo sucede para z_log_var_1 y z_log_var_2.
+5. Se debe escoger un número num_steps de parejas (z_mean_i, z_log_var_i) uniformemente distribuidos sobre la interpolación lineal entre z_mean_1 y z_mean_2, y entre z_log_var_1, z_log_var_2, y a partir de cada pareja (z_mean_i, z_log_var_i) debe hacer la reconstrucción de correspondiente.
+6. Puede usar la función np.linspace() para escoger esos num_steps puntos.
+7. Cada rostro reconstruido lo debe ir guardando en la lista que finalmente retorna la función.

@@ -1,0 +1,33 @@
+# FUNCIÓN CALIFICADA endog_exog:
+from sklearn.preprocessing import OneHotEncoder
+
+def prep_exog(exog):
+    ### ESCRIBA SU CÓDIGO AQUÍ ###
+
+    # Limpiar y convertir valores de "Screen Size (inches)"
+    def procesar_screen_size(valor):
+        if isinstance(valor, str):
+            if "unfolded" in valor:
+                return float(valor.split()[0])  # Tomar solo el primer número
+            if "+" in valor:
+                return sum(map(float, valor.split("+")))  # Sumar las partes
+        return float(valor)  # Convertir directamente si ya es un número válido
+    
+    exog_p = exog.copy()
+    encoder = OneHotEncoder(sparse_output=False)
+    encoded = encoder.fit_transform(exog[['Brand']])
+    encoded = pd.DataFrame(encoded, columns=encoder.get_feature_names_out(['Brand']), index=exog_p.index).to_numpy()
+
+    # Convert columns to string type before using .str accessor
+    exog_p = exog_p.drop('Brand', axis=1)
+
+    # Convert columns to string type before using .str accessor
+    exog_p['Storage '] = exog_p['Storage '].astype(str).str.extract(r'(\d+)').astype(float)
+    exog_p['RAM '] = exog_p['RAM '].astype(str).str.extract(r'(\d+)').astype(float)
+
+    # Aplicar limpieza a la columna "Screen Size (inches)"
+    exog_p['Screen Size (inches)'] = exog_p['Screen Size (inches)'].apply(procesar_screen_size)
+    
+    exog_p = np.concatenate((exog_p.to_numpy(), encoded), axis=1)
+    return exog_p
+    

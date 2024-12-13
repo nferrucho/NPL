@@ -1,0 +1,292 @@
+Token Mlflow:
+2pK4C5bDe1buHeGQuaIutafJPuh_3f3nwzmCCQqU3fgbTDGYi
+-----------------------------------------------------
+El objeto es probar diferentes modelos de clasificacion. Se trata de un dataset sintético utilizado comúnmente para tareas de clasificación binaria en aprendizaje automático. Este conjunto de datos consta de dos características continuas y una etiqueta binaria que indica a qué círculo pertenece cada punto.
+
+Tenemos el siguiente conjunto de datos generados aleatoriamente 
+funcion inicial para generar circulos 
+features, labels = make_circles(
+    n_samples=1000,
+    noise=0.1,
+    factor=0.5,
+    random_state=0
+    )
+
+ crea un conjunto de puntos distribuidos uniformemente en dos círculos concéntricos, donde la distancia entre los dos círculos es ajustable. La distribución de puntos dentro de cada círculo se controla mediante el parámetro noise, que agrega ruido aleatorio a la posición de cada punto
+
+-----------------------------------------------------
+
+para realizar un entrenamiento y prueba separamos los datos de la siguiente forma:
+features_train, features_test, labels_train, labels_test = train_test_split(
+        features, labels, test_size=0.3, random_state=0
+        )
+--------------
+
+ implementar la función train_model con el modelo xgboost la cual toma como entrada las características y etiquetas de entrenamiento, la profundidad de los árboles, el número de estimadores, y la taza de aprendizaje. La función debe retornar el modelo entrenado.
+
+Entrada:
+features: matriz de características de entrenamiento.
+labels: vector de etiquetas de entrenamiento.
+max_depth: profundidad máxima del árbol.
+n_estimators: número de estimadores.
+learning_rate: taza de aprendizaje.
+random_state: semilla de números aleatorios.
+
+Retorno:
+model: modelo de xgboost entrenado.        
+
+
+Para probar al funcion se realiza el siguiente script
+model = train_model(
+        features=features_train,
+        labels=labels_train,
+        max_depth=2,
+        n_estimators=10,
+        learning_rate=1e-4,
+        random_state=0
+        )
+print(model.max_depth)
+print(model.n_estimators)
+print(model.learning_rate)
+
+------------------------------
+def train_model(
+    features,
+    labels,
+    max_depth,
+    n_estimators,
+    learning_rate,
+    random_state
+    ):
+    
+    import xgboost as xgb
+    ### ESCRIBA SU CÓDIGO AQUÍ ###
+    model = xgb.XGBClassifier(
+        max_depth=max_depth,
+        n_estimators=n_estimators,
+        learning_rate=learning_rate,
+        random_state=random_state,
+        use_label_encoder=False,  # Evitar advertencias sobre codificación de etiquetas
+        eval_metric="logloss"    # Métrica para clasificaciones binarias
+    )
+    model.fit(features, labels)
+    return model
+
+------------------------------
+implementar la función eval_model, que permita calcular el f1_score. La cual toma como entrada un modelo entrenado, las características y el vector de etiquetas de evaluación. Debe retornar el valor de la métrica.
+
+Entrada:
+model: modelo entrenado.
+features: conjunto de datos de evaluación.
+labels: etiquetas de evaluación.
+
+Retorno:
+score: f1-score
+
+Condiciones:
+1. Para evaluar el f1-score puede usar la función f1_score de sklearn
+2. Debe obtener las predicciones del modelo con el método predict
+
+-------------------------------------------
+def eval_model(
+    model,
+    features,
+    labels,
+    ):
+    from sklearn.metrics import f1_score
+    ### ESCRIBA SU CÓDIGO AQUÍ ###
+    # Obtener las predicciones del modelo
+    predictions = model.predict(features)
+    
+    # Calcular el F1-score
+    score = f1_score(labels, predictions)
+    return score
+-------------------------------------------
+Usando mlflow:
+crear una función que permita crear un run en mlflow para entrenar el modelo con sus correspondientes hiperparámetros bajo un experimento específico. Debe registrar el modelo, los hiperparámetros y la métrica del modelo que calcula en el punto anterior.
+
+Para ello deberá implementar la función mlflow_run, la cual toma como entrada las características y etiquetas de entrenamiento, la profundidad máxima del modelo, el número de estimadores, la taza de aprendizaje y el experimento de mlflow. Debe retornar la ejecución y el valor de la métrica del modelo.
+
+Entrada:
+features_train: matriz de características de entrenamiento.
+labels_train: vector de etiquetas de entrenamiento.
+features_test: matriz de características de evaluación.
+labels_test: vector de etiquetas de evaluación.
+max_depth: profundidad máxima del árbol.
+n_estimators: número de estimadores.
+learning_rate: taza de aprendizaje.
+random_state: semilla de números aleatorios.
+exp: experimento de mlflow.
+run_name: nombre a asignar a la ejecución.
+
+Retorno:
+run: ejecución de mlflow.
+score: valor de la métrica en la ejecución.
+
+Condiciones:
+1. Recuerde usar de forma adecuada las particiones de entrenamiento y prueba con las funciones train_model y eval_model respectivamente.
+2. Recuerde terminar la ejecución con la función mlflow.end_run().
+
+--------------------------
+# FUNCIÓN CALIFICADA mlflow_run:
+def mlflow_run(
+    features_train,
+    labels_train,
+    features_test,
+    labels_test,
+    max_depth,
+    n_estimators,
+    learning_rate,
+    random_state,
+    exp,
+    run_name):
+  
+    import numpy as np
+    from urllib.parse import urlparse
+
+    # Configurar el experimento
+    mlflow.set_experiment(exp)
+
+    with mlflow.start_run(run_name=run_name) as run:
+        # Entrenar el modelo
+        model = train_model(features_train, labels_train, max_depth, n_estimators, learning_rate, random_state)
+
+        # Evaluar el modelo
+        score = eval_model(model, features_test, labels_test)
+
+        # Registrar los hiperparámetros y la métrica
+        mlflow.log_param("max_depth", max_depth)
+        mlflow.log_param("n_estimators", n_estimators)
+        mlflow.log_param("learning_rate", learning_rate)
+        mlflow.log_param("random_state", random_state)
+        mlflow.log_metric("f1_score", score)
+
+        # Guardar el modelo
+        mlflow.sklearn.log_model(model, "model")  # Añadir ejemplo de entrada
+
+        # Ajustar la URI del artifact (solo para compatibilidad en la celda de prueba)
+        artifact_path = urlparse(run.info.artifact_uri).path
+
+        # Modificar internamente la URI para evitar errores al listar
+        run.info._artifact_uri = artifact_path
+
+    mlflow.end_run()
+
+    # Devolver el objeto run original y el score convertido a np.float64
+    return run, np.float64(score)
+    ### FIN DEL CÓDIGO ###
+--------------------------
+
+
+ implementar la función de nombre objetive para optimizar los hiper-parámetros con optuna. En específico debe variar los valores de la siguiente forma:
+
+max_depth: valor entero entre 2 y 10.
+n_estimators: valor entero entre 25 y 200.
+learning_rate: valor continuo entre 1e-6 y 1 (variaciones logarítmicas).
+Todos los intentos deben estar registrados dentro de mlflow, para esto debe utilizar el experimento que está definido en la variable exp, como run_name debe utilizar el valor "optuna" y debe utilizar el valor 0 como random_state.
+
+Debe implementar la función objective la cual toma como entrada un trial de optuna y debe retornar el valor de la métrica a maximizar.
+
+Parámetros:
+
+trial: objeto trial de optuna.
+Retorna:
+
+score: f1-score.
+
+Condiciones:
+1. Puede utilizar el método suggest_int de un Trial para generar un hiperparámetro de tipo entero.
+3. Puede utilizar el método suggest_float de un Trial para generar un hiperparámetro continúo.
+------------------------
+# FUNCIÓN CALIFICADA objective:
+def objective(trial):
+    ### ESCRIBA SU CÓDIGO AQUÍ ###
+    import optuna
+    from sklearn.metrics import f1_score
+    
+    # Sugerir los valores de los hiperparámetros
+    max_depth = trial.suggest_int("max_depth", 2, 10)  # Entre 2 y 10
+    n_estimators = trial.suggest_int("n_estimators", 25, 200)  # Entre 25 y 200
+    learning_rate = trial.suggest_float("learning_rate", 1e-6, 1, log=True)  # Entre 1e-6 y 1 (variación logarítmica)
+
+    # Entrenar el modelo con los hiperparámetros sugeridos
+    model = train_model(
+        features=features_train,
+        labels=labels_train,
+        max_depth=max_depth,
+        n_estimators=n_estimators,
+        learning_rate=learning_rate,
+        random_state=0
+    )
+
+    # Evaluar el modelo en el conjunto de prueba
+    score = eval_model(model, features_test, labels_test)
+    
+    return score    
+ ### FIN DEL CÓDIGO ###
+ --------------------------
+Se debe generar una versión del mejor modelo con el nombre xgboost versión 1. Posteriormente, debe implementar una función que permita cargar el modelo:
+
+Para esto deberá implementar la función load_model la cual debe retornar el modelo versionado como xgboost versión 1:
+
+Entrada:
+La función no tiene parámetros de entrada.
+
+Retorno:
+model: modelo cargado con mlflow.
+
+Condiciones:
+1. Recuerde versionar el modelo antes de cargarlo.
+2. Puede ordenar las ejecuciones de mlflow de acuerdo a score y con esto seleccionar el mejor modelo.
+3. Puede cargar un modelo versionado con la función mlflow.pyfunc.load_model.
+------------------------------
+
+A. Se crea el modelo en mlflow con nombre xgboost
+B. para el versionado
+----------------------
+import mlflow
+import mlflow.sklearn
+from mlflow.tracking import MlflowClient
+
+def register_best_model(exp_name, model_name="xgboost"):
+    """
+    Registra el mejor modelo basado en el F1-score como un modelo versionado en MLflow.
+    
+    Args:
+        exp_name (str): Nombre del experimento en MLflow.
+        model_name (str): Nombre del modelo a registrar (por defecto "xgboost").
+    """
+    client = MlflowClient()
+
+    # Obtener las ejecuciones del experimento ordenadas por f1_score
+    experiment = client.get_experiment_by_name(exp_name)
+    if not experiment:
+        raise ValueError(f"No se encontró un experimento con el nombre {exp_name}")
+
+    runs = client.search_runs(
+        experiment_ids=[experiment.experiment_id],
+        order_by=["metrics.f1_score DESC"],  # Ordenar por F1-score de mayor a menor
+        max_results=1
+    )
+    if not runs:
+        raise ValueError("No se encontraron ejecuciones para el experimento.")
+
+    # Obtener la ejecución con el mejor F1-score
+    best_run = runs[0]
+    run_id = best_run.info.run_id
+
+    # Registrar el modelo como xgboost versión 1
+    model_uri = f"runs:/{run_id}/model"
+    mlflow.register_model(model_uri, model_name)
+
+    print(f"Modelo registrado como {model_name}, versión 1")
+
+ C. Para almacenar el modelos
+ -----------------------------   
+ def load_model():
+    ### ESCRIBA SU CÓDIGO AQUÍ ###
+    model_name = 'xgboost'
+    model_version = 1
+    model = mlflow.pyfunc.load_model(f"models:/{model_name}/{model_version}")
+    return model
+    
